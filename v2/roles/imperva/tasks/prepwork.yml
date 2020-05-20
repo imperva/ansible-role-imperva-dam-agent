@@ -1,0 +1,68 @@
+---
+# Ensure there is a place for Imperva Downloads
+- name: Imperva binaries directory
+  file:
+    path: "{{ role_path }}/files/imperva_packages"
+    state: directory
+  delegate_to: 127.0.0.1
+  run_once: true
+  become: False
+#
+# Which Agent Do We Need?
+#
+- name: Checking for Which Agent Script
+  find:
+    paths: "{{ role_path }}/files/imperva_packages"
+    patterns: "which_ragent_package*"
+  register: which_ragent_scripts
+  delegate_to: 127.0.0.1
+  run_once: true
+  become: False
+
+- name: too many, or too few which_ragent scripts
+  fail:
+    msg: >-
+      Please download the latest which_ragent_package script
+      and place it in the "imperva_packages" directory, removing
+      all older versions
+  failed_when: which_ragent_scripts.matched > 1 or which_ragent_scripts.matched < 1
+  delegate_to: 127.0.0.1
+  run_once: true
+  become: False
+
+- name: Run which_ragent on clients
+  script: |-
+    {{ which_ragent_scripts.files[0]['path'] }} -v {{ imperva_major_version }} | awk '/Agent package is:/ { gsub(" ", "", $0); gsub(":", "=", $0); print }'
+  changed_when: False
+  register: which_agent
+  become: False
+
+- name: Set tarball name
+  set_fact:
+    imperva_install_tarball: "{{ which_agent.stdout_lines | select('match', 'LatestDAMAgentpackageis=') | first | regex_replace('LatestDAMAgentpackageis=') }}"
+
+- name: Set tarball name
+  set_fact:
+    imperva_install_tarball: "{{ which_agent.stdout_lines | select('match', 'LatestDAMAgentpackageis=') | first | regex_replace('LatestDAMAgentpackageis=') }}"
+
+- name: Setting Latest DAM Agent Package
+  set_fact:
+    latest_dam_agent: "{{ which_agent.stdout_lines | select('match', 'LatestDAMAgentpackageis=') | first | regex_replace('LatestDAMAgentpackageis=') | regex_replace('.tar.gz', '.bsx') }}"
+
+- name: Setting Latest Big Data Agent Package
+  set_fact:
+    latest_bd_agent: "{{ which_agent.stdout_lines | select('match', 'LatestBigDataAgentpackageis=') | first | regex_replace('LatestBigDataAgentpackageis=') | regex_replace('.tar.gz', '.bsx') }}"
+
+#
+# End Which Agent Investigation
+#
+- name: Checking for Agent Tarball
+  stat:
+    path: "{{ role_path }}/files/imperva_packages/{{ imperva_install_tarball }}"
+  register: imperva_tarball_avail
+
+- name: Imperva Agent Tarball Available
+  fail:
+    msg: >-
+      Please download the Agent tarball {{ imperva_install_tarball }}
+  when: imperva_tarball_avail.stat.exists

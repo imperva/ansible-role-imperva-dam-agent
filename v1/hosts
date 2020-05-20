@@ -1,0 +1,1 @@
+db_server_1 ansible_host=192.168.6.105 ansible_conenction=ssh ansible_user=root

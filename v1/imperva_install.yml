@@ -1,0 +1,11 @@
+---
+# install Imperva
+#
+
+- hosts: all
+  order: sorted
+  become: yes
+  gather_facts: no
+  #gather_subset: facter
+  roles:
+    - imperva_install

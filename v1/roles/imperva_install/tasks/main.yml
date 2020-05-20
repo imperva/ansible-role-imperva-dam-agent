@@ -1,0 +1,160 @@
+---
+
+  - name: Get RedHat Version
+    shell: "uname -r | sed -e 's/.*el//' -e 's/.x86_64//'"
+    args:
+      warn: false # set to prevent warning message because we have to run it like this to check against the system
+    changed_when: false # This allows this register to show as "OK" instead of always showing "CHANGED"
+    register: current_rhel_version
+    check_mode: no
+  
+  - name: Set SecureSphere Variables
+    set_fact:
+      gateway_ip: "{{ gateway_ip }}"
+      gateway_pass: "{{ gateway_pass }}"
+  
+  - name: Installer Agent - Get Current Version
+    shell: "echo q | sudo /opt/imperva/installer/bin/racli 2> /dev/null | grep Release | cut -f2 -d: | sed -e 's/^ //g'"
+    args:
+      warn: false # set to prevent warning message becasue we have to run it like this to check against the system
+    changed_when: false # This allows this register to show as "OK" instead of always showing "CHANGED"
+    register: current_installer_version
+    check_mode: no
+  
+  - name: Installer Agent - Get Current Registration
+    shell: "echo q | sudo /opt/imperva/installer/bin/racli 2> /dev/null | grep 'Registration Status' | cut -f2 -d: | sed -e 's/^ //g'"
+    args:
+      warn: false # set to prevent warning message becasue we have to run it like this to check against the system
+    changed_when: false # This allows this register to show as "OK" instead of always showing "CHANGED"
+    register: current_installer_registration
+    check_mode: no
+  
+  - name: Imperva Version - Get Current Version
+    shell: "echo q | sudo /opt/imperva/ragent/bin/racli 2> /dev/null | grep Release | cut -f2 -d: | sed -e 's/^ //g'"
+    args:
+      warn: false # set to prevent warning message becasue we have to run it like this to check against the system
+    changed_when: false # This allows this register to show as "OK" instead of always showing "CHANGED"
+    register: current_imperva_version
+    check_mode: no
+  
+  - name: Imperva Version - Get Current Registration
+    shell: "echo q | sudo /opt/imperva/ragent/bin/racli 2> /dev/null | grep 'Registration Status' | cut -f2 -d: | sed -e 's/^ //g'"
+    args:
+      warn: false # set to prevent warning message becasue we have to run it like this to check against the system
+    changed_when: false # This allows this register to show as "OK" instead of always showing "CHANGED"
+    register: current_imperva_registration
+    check_mode: no
+  
+  - name: Set RHEL7 Variables
+    set_fact:
+      preferred_installer_version: "{{ preferred_installer_version_rhel7 }}"
+      preferred_imperva_version: "{{ preferred_imperva_version_rhel7 }}"
+      preferred_installer_file: "{{ preferred_installer_file_rhel7 }}"
+      preferred_imperva_file: "{{ preferred_imperva_file_rhel7 }}"
+    when: current_rhel_version.stdout == "7"
+  
+  - name: Display variables
+    vars:
+      msg: |
+          RHEL Major Version: {{ current_rhel_version.stdout }}
+          Current Installer Version: {{ current_installer_version.stdout }}
+          Preferred Installer Verion: {{ preferred_installer_version }}
+          Installer Registration Status: {{ current_installer_registration.stdout }}
+          Current Imperva Version: {{ current_imperva_version.stdout }}
+          Preferred Imperva Verion: {{ preferred_imperva_version }}
+          Agent Registration Status: {{ current_imperva_registration.stdout }}
+          Installer File: {{ preferred_installer_file }}
+          Imperva File: {{ preferred_imperva_file }}
+          Gateway IP: {{ gateway_ip }}
+          Agent Name: {{ agent_name }}
+    debug:
+      msg: "{{ msg.split('\n') }}"       
+    tags: debug_info
+    check_mode: no
+
+  - name: Imperva Agent - Update/Install Block
+    vars:
+      install_options: "-n -d {{ app_imperva_path }}"
+    block:
+    - name: Imperva Agent - Make Temporary Directory
+      file:
+        path: "{{ tmp_install_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: 0700
+    - name: Imperva Agent - Copy Installation File
+      copy:
+        src: files/{{ preferred_imperva_file }}
+        dest: "{{ tmp_install_dir }}/{{ preferred_imperva_file }}"
+        owner: root
+        group: root
+        mode:  0700
+    - name: Imperva Agent - Check for Upgrade (ok) versus New Install (skip)
+      set_fact:
+        install_options: "-u -n"
+      when: ( current_imperva_version.stdout is search("^\d+.*") )
+    - name: Imperva Agent - Run Installation/Upgrade
+      shell: "export PATH=$PATH:/sbin:/usr/sbin; {{ tmp_install_dir }}/{{ preferred_imperva_file }} {{ install_options }}"
+      args:
+        warn: false # set to prevent warning message becasue we have to run it like this to check against the system
+    when: ( current_imperva_version.stdout != preferred_imperva_version )
+  
+  - name: Imperva Agent - Register Agent
+    shell: "{{ app_imperva_path }}/ragent/bin/cli --dcfg {{ app_imperva_path }}/ragent/etc --dvar {{ app_imperva_path }}/ragent/var --dtarget {{ app_imperva_path }}/ragent/etc --dlog {{ app_imperva_path }}/ragent/etc/logs/cli registration advanced-register registration-type=Primary is-db-agent=true ragent-name={{ agent_name }}-{{ ansible_host }} gw-ip={{ gateway_ip }} gw-port={{ app_imperva_port }} manual-settings-activation=Automatic monitor-network-channels=Both password={{ gateway_pass }}"
+    args:
+      warn: false # set to prevent warning message because we have to run it like this to check against the system
+    ignore_errors: yes
+    when: ( current_imperva_registration.stdout != "registered" )
+    
+  - name: Installer Agent - Update/Install Block
+    vars:
+      install_options: "-n -d {{ app_imperva_path}}"
+    block:
+    - name: Installer Agent - Make Temporary Directory
+      file:
+        path: "{{ tmp_install_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: 0700
+    - name: Installer Agent - Copy Installation File
+      copy:
+        src: files/{{ preferred_installer_file }}
+        dest: "{{ tmp_install_dir }}/{{ preferred_installer_file }}"
+        owner: root
+        group: root
+        mode:  0700
+    - name: Installer Agent - Check for Upgrade (ok) versus New Install (skip)
+      set_fact:
+        install_options: "-u -n"
+      when: ( current_installer_version.stdout is search("^\d+.*") )
+    - name: Installer Agent - Run Installation/Upgrade
+      shell: "export PATH=$PATH:/sbin:/usr/sbin; {{ tmp_install_dir }}/{{ preferred_installer_file }} {{ install_options }}"
+      args:
+        warn: false # set to prevent warning message because we have to run it like this to check against the system
+    when: ( current_installer_version.stdout != preferred_installer_version )
+   
+  - name: Installer Agent - Register Installer
+    shell: "{{ app_imperva_path }}/installer/bin/cliinstaller --dcfg {{ app_imperva_path }}/installer/etc --dvar {{ app_imperva_path }}/installer/var --dtarget {{ app_imperva_path }}/installer/etc --dlog {{ app_imperva_path }}/installer/etc/logs/cli registration advanced-register registration-type=Primary is-db-agent=true ragent-name={{ agent_name }}-{{ ansible_host }} gw-ip={{ gateway_ip }} gw-port={{ app_imperva_port }} manual-settings-activation=Automatic monitor-network-channels=Both password={{ gateway_pass }} package-folder-size={{ app_imperva_fldr }}"
+    args:
+      warn: false # set to prevent warning message because we have to run it like this to check against the system
+    ignore_errors: yes
+    when: ( current_installer_registration.stdout != "registered" )
+
+  - name: Imperva Agent - Enable and Start Service
+    service:
+      name: rainit
+      enabled: yes
+      state: started
+  
+  - name: Installer Agent - Enable and Start Service
+    service:
+      name: rainstallerinit
+      enabled: yes
+      state: started
+   
+  - name: Remove Temporary Installion Files
+    file:
+      path: /tmp/imperva_install/
+      state: absent

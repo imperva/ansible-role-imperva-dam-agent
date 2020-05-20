@@ -1,0 +1,5 @@
+---
+agents:
+  hosts:
+    db-server-1.example.com: {}
+

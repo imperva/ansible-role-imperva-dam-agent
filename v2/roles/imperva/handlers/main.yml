@@ -1,0 +1,60 @@
+---
+# handlers file for imperva
+- name: Register Agent
+  shell: >-
+    {{ imperva_installation_dir }}/ragent/bin/cli
+    --dcfg {{ imperva_installation_dir }}/ragent/etc
+    --dvar {{ imperva_installation_dir }}/ragent/var
+    --dtarget {{ imperva_installation_dir }}/ragent/etc
+    --dlog {{ imperva_installation_dir }}/ragent/etc/logs/cli
+    registration advanced-register
+    registration-type=Primary
+    is-db-agent=true
+    ragent-name={{ inventory_hostname }}
+    gw-ip={{ gateway_ip }}
+    gw-port={{ app_imperva_port }}
+    manual-settings-activation=Automatic
+    monitor-network-channels=Both
+    password={{ gateway_pass }}
+
+- name: Register Installer
+  shell: >-
+    {{ imperva_installation_dir }}/installer/bin/cliinstaller
+    --dcfg {{ imperva_installation_dir }}/installer/etc
+    --dvar {{ imperva_installation_dir }}/installer/var
+    --dtarget {{ imperva_installation_dir }}/installer/etc
+    --dlog {{ imperva_installation_dir }}/installer/etc/logs/cli
+    registration advanced-register
+    registration-type=Primary
+    is-db-agent=true
+    ragent-name={{ inventory_hostname }}
+    gw-ip={{ gateway_ip }}
+    gw-port={{ app_imperva_port }}
+    manual-settings-activation=Automatic
+    monitor-network-channels=Both
+    password={{ gateway_pass }}
+    package-folder-size={{ app_imperva_fldr }}
+
+- name: Start Agent service
+  service:
+    name: rainit
+    enabled: yes
+    state: started
+
+- name: Start Install Manager
+  service:
+    name: rainstallerinit
+    enabled: yes
+    state: started
+
+- name: Restart Agent service
+  service:
+    name: rainit
+    enabled: yes
+    state: restarted
+
+- name: Restart Install Manager
+  service:
+    name: rainstallerinit
+    enabled: yes
+    state: restarted

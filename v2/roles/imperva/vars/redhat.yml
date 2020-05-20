@@ -1,0 +1,6 @@
+---
+required_packages:
+  - yum-utils
+  - yum-plugin-versionlock
+  - glibc.i686
+  - libstdc++.i686

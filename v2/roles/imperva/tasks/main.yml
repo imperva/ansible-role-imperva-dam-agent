@@ -1,0 +1,17 @@
+---
+- name: Imperva - OS Defaults
+  include_vars: "{{ ansible_os_family | lower }}.yml"
+
+- name: Imperva - Prepare Control Node
+  include_tasks: prepwork.yml
+
+- name: Imperva - Gather Inventory Host Information
+  include_tasks: gatherinfo.yml
+
+- name: Imperva - Installation Tasks
+  include_tasks: install.yml
+  when: install
+
+- name: Imperva - Uninstall Tasks
+  include_tasks: uninstall.yml
+  when: not install

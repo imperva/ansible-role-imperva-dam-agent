@@ -1,0 +1,15 @@
+---
+package_prereqs:
+  - yum-utils
+  - yum-plugin-versionlock
+app_imperva_path: "/opt/imperva"
+app_imperva_port: "443"
+app_imperva_fldr: "2048"
+tmp_install_dir: "/tmp/imperva_install"
+gateway_ip: 192.168.6.101
+gateway_pass: Webco123
+agent_name: "RedHat"
+preferred_installer_version_rhel7: "3.5.0.20.0.567601"
+preferred_imperva_version_rhel7: "13.5.0.20.0.569909"
+preferred_installer_file_rhel7: "Imperva-ragentinstaller-RHEL-v7-kSMP-px86_64-b3.5.0.20.0.567601.bsx"
+preferred_imperva_file_rhel7: "Imperva-ragent-RHEL-v7-kSMP-px86_64-b13.5.0.20.0.569909.bsx"

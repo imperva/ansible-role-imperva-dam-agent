@@ -1,0 +1,44 @@
+- name: SecureSphere Agent Installation Manager Present?
+  stat:
+    path: '{{ imperva_installation_dir }}/installer/bin/racli'
+  register: agent_installation_manager
+
+- name: Gather SecureSphere Agent Installation Manager Facts
+  shell: >-
+    set -o pipefail && {{ imperva_installation_dir }}/installer/bin/racli | awk '/:/ { gsub(" ", "", $0); gsub(":", "=", $0); print }'
+  args:
+    stdin: "q"
+  when: agent_installation_manager.stat.isreg is defined and agent_installation_manager.stat.isreg
+  changed_when: false
+  register: agent_installation_manager_facts
+
+- name: Get SecureSphere Agent Installation Manager Version
+  set_fact:
+    agent_installation_manager_version: "{{ agent_installation_manager_facts.stdout_lines | select('match', 'Release=') | first | regex_replace('Release=') }}"
+  when: agent_installation_manager_facts.stdout_lines is defined
+
+- name: Get SecureSphere Agent Installation Manager Registration Status
+  set_fact:
+    agent_installation_manager_registrationstatus: "{{ agent_installation_manager_facts.stdout_lines | select('match', 'RegistrationStatus=') | first | regex_replace('RegistrationStatus=') }}"
+  when: agent_installation_manager_facts.stdout_lines is defined
+
+- name: SecureSphere Agent Present?
+  stat:
+    path: '{{ imperva_installation_dir }}/ragent/bin/racli'
+  register: ragent
+
+- name: Gather SecureSphere Agent Facts
+  shell: '{{ imperva_installation_dir }}/ragent/bin/racli'
+  args:
+    stdin: "q"
+  when: ragent.stat.isreg is defined and ragent.stat.isreg
+  changed_when: false
+  register: ragent_facts
+
+- name: Get SecureSphere Agent Version
+  set_fact: agent_version="{{ ragent.stdout_lines | select('match', 'Release=') | first | regex_replace('Release=') }}"
+  when: ragent.stdout_lines is defined
+
+- name: Get SecureSphere Agent Registration Status
+  set_fact: agent_registrationstatus="{{ ragent.stdout_lines | select('match', 'RegistrationStatus=') | first | regex_replace('RegistrationStatus=') }}"
+  when: ragent.stdout_lines is defined

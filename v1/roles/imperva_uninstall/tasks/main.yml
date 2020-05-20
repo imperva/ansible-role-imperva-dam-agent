@@ -1,0 +1,26 @@
+---
+
+- name: Installer Agent - Uninstall
+  shell: "/opt/imperva/installer/bin/uninstall"
+  args:
+    warn: false # set to prevent warning message because we have to run it like this to check against the system
+  changed_when: false # This allows this register to show as "OK" instead of always showing "CHANGED"
+  register: installer_agent_uninstall
+
+- name: Imperva Agent - Uninstall
+  shell: "/opt/imperva/ragent/bin/uninstall"
+  args:
+    warn: false # set to prevent warning message because we have to run it like this to check against the system
+  changed_when: false # This allows this register to show as "OK" instead of always showing "CHANGED"
+  register: imperva_agent_uninstall
+
+- name: Display Output
+  vars:
+    msg: |
+        Installer Agent Uninstall: {{ installer_agent_uninstall.stdout }}
+        Imperva Agent Stop: {{ imperva_agent_stop.stdout }}
+        Imperva Agent Uninstall: {{ imperva_agent_uninstall.stdout }}
+  debug:
+    msg: "{{ msg.split('\n') }}"
+  tags: debug_info
+  check_mode: no

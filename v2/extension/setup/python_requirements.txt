@@ -1,0 +1,7 @@
+PyYAML
+Jinja2
+httplib2
+ansible
+ansible-lint
+cryptography
+pyvmomi

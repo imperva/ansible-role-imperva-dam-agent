@@ -1,0 +1,58 @@
+---
+- name: Checking Required Vars
+  assert:
+    that: "{{ item }} is defined"
+    quiet: yes
+    fail_msg: "{{ item }} must be defined for {{ ansible_hostname }}"
+  loop:
+    - gateway_ip
+    - gateway_pass
+
+- name: Install Pre-Requisite Packages
+  package:
+    name: '{{ required_packages }}'
+
+- name: Ship Installers
+  block:
+  - name: Create Temp Directory
+    tempfile:
+      state: directory
+      suffix: imperva
+    register: imperva_tempdir
+
+  - name: Copy Agent Tarball
+    unarchive:
+      src: files/imperva_packages/{{ imperva_install_tarball }}
+      dest: "{{ imperva_tempdir.path }}"
+      owner: root
+      group: root
+      mode:  0700
+  when: agent_installation_manager.stat.isreg is not defined or ragent.stat.isreg is not defined
+
+- name: Install Imperva
+  block:
+  # Todo: Add better support for multiple versions / instances of the Installation Manager
+  - name: Install SecureSphere Agent Installation Manager
+    shell: "{{ imperva_tempdir.path }}/Imperva-ragentinstaller* -n -d {{ imperva_installation_dir }}"
+    args:
+      creates: '{{ imperva_installation_dir }}/installer/bin/racli'
+    when: agent_installation_manager.stat.isreg is not defined
+    notify:
+      - Register Installer
+      - Start Install Manager
+
+  - name: Install SecureSphere DAM Agent
+    shell: "{{ imperva_tempdir.path }}/{{ latest_dam_agent }} -n -d {{ imperva_installation_dir }}"
+    args:
+      creates: '{{ imperva_installation_dir }}/ragent/bin/racli'
+    when: ragent.stat.isreg is not defined
+    notify:
+      - Register Agent
+      - Start Agent service
+  always:
+  - name: Remove Tempdir and Installer Files
+    file:
+      path: "{{ imperva_tempdir.path }}"
+      state: absent
+  when: agent_installation_manager.stat.isreg is not defined or ragent.stat.isreg is not defined
+
