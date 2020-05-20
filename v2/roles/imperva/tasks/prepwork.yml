@@ -64,5 +64,5 @@
 - name: Imperva Agent Tarball Available
   fail:
     msg: >-
-      Please download the Agent tarball {{ imperva_install_tarball }}
-  when: imperva_tarball_avail.stat.exists
+      Please download the Agent tarball {{ imperva_install_tarball }} and place it in the "imperva_packages" directory 
+  when: not imperva_tarball_avail.stat.exists
