@@ -40,7 +40,7 @@ Once you have the Setup steps done, you will have an environment that deploys th
 
 To push out to production systems, you can use the following ansible command from the /v2 directory:
 ```
-ansible-playbook --connection=ssh --timeout=30 --limit="db-server-1" --inventory-file=.vagrant/provisioners/ansible/inventory --extra-vars=\{\"gateway_ip\":\"1.2.3.4\",\"gateway_pass\":\"Webco123\"\} -v v2/site.yml
+ansible-playbook -i inventories/default/hosts --extra-vars=\{\"gateway_ip\":\"1.2.3.4\",\"gateway_pass\":\"Webco123\"\} -v site.yml
 ```
 You will need to create a list of systems to push to in the inventory-file (see .vagrant/provisioners/ansible/inventory for an example).  You can then use the "limit" feature to restrict the installation to particular systems on the inventory list.
 
