@@ -60,6 +60,9 @@
   stat:
     path: "{{ role_path }}/files/imperva_packages/{{ imperva_install_tarball }}"
   register: imperva_tarball_avail
+  delegate_to: 127.0.0.1
+  run_once: true
+  become: False
 
 - name: Imperva Agent Tarball Available
   fail:
