@@ -1,7 +1,7 @@
 ---
 # handlers file for imperva
 - name: Register Agent
-  shell: >-
+  command: >-
     {{ imperva_installation_dir }}/ragent/bin/cli
     --dcfg {{ imperva_installation_dir }}/ragent/etc
     --dvar {{ imperva_installation_dir }}/ragent/var
@@ -18,7 +18,7 @@
     password={{ gateway_pass }}
 
 - name: Register Installer
-  shell: >-
+  command: >-
     {{ imperva_installation_dir }}/installer/bin/cliinstaller
     --dcfg {{ imperva_installation_dir }}/installer/etc
     --dvar {{ imperva_installation_dir }}/installer/var
@@ -36,25 +36,21 @@
     package-folder-size={{ app_imperva_fldr }}
 
 - name: Start Agent service
-  service:
-    name: rainit
-    enabled: yes
-    state: started
+  command: >-
+    {{ imperva_installation_dir }}/ragent/bin/rainit start
 
 - name: Start Install Manager
-  service:
-    name: rainstallerinit
-    enabled: yes
-    state: started
+  command: >-
+    {{ imperva_installation_dir }}/installer/bin//rainstallerinit start
 
 - name: Restart Agent service
-  service:
-    name: rainit
-    enabled: yes
-    state: restarted
+  command: >-
+    {{ imperva_installation_dir }}/ragent/bin/rainit restart
 
 - name: Restart Install Manager
-  service:
-    name: rainstallerinit
-    enabled: yes
-    state: restarted
+  command: >-
+    {{ imperva_installation_dir }}/installer/bin//rainstallerinit restart
+
+- name: Get Agent status
+  command: >-
+    echo q | sudo {{ imperva_installation_dir }}/ragent/bin/racli 2> /dev/null | egrep "Release|Status"
