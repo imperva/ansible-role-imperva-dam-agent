@@ -6,7 +6,7 @@
     state: directory
   delegate_to: 127.0.0.1
   run_once: true
-  become: False
+
 #
 # Which Agent Do We Need?
 #
@@ -17,7 +17,7 @@
   register: which_ragent_scripts
   delegate_to: 127.0.0.1
   run_once: true
-  become: False
+
 
 - name: too many, or too few which_ragent scripts
   fail:
@@ -28,14 +28,14 @@
   failed_when: which_ragent_scripts.matched > 1 or which_ragent_scripts.matched < 1
   delegate_to: 127.0.0.1
   run_once: true
-  become: False
+
 
 - name: Run which_ragent on clients
   script: |-
     {{ which_ragent_scripts.files[0]['path'] }} -v {{ imperva_major_version }} | awk '/Agent package is:/ { gsub(" ", "", $0); gsub(":", "=", $0); print }'
   changed_when: False
   register: which_agent
-  become: False
+
 
 - name: Set tarball name
   set_fact:
@@ -47,11 +47,9 @@
 
 - name: Setting Latest DAM Agent Package
   set_fact:
-    latest_dam_agent: "{{ which_agent.stdout_lines | select('match', 'LatestDAMAgentpackageis=') | first | regex_replace('LatestDAMAgentpackageis=') | regex_replace('.tar.gz', '.bsx') }}"
+    latest_dam_agent: "{{ which_agent.stdout_lines | select('match', 'LatestDAMAgentpackageis=') |
+                    first | regex_replace('LatestDAMAgentpackageis=') | regex_replace('.tar.gz', '.bsx') }}"
 
-- name: Setting Latest Big Data Agent Package
-  set_fact:
-    latest_bd_agent: "{{ which_agent.stdout_lines | select('match', 'LatestBigDataAgentpackageis=') | first | regex_replace('LatestBigDataAgentpackageis=') | regex_replace('.tar.gz', '.bsx') }}"
 
 #
 # End Which Agent Investigation
@@ -62,10 +60,10 @@
   register: imperva_tarball_avail
   delegate_to: 127.0.0.1
   run_once: true
-  become: False
+
 
 - name: Imperva Agent Tarball Available
   fail:
     msg: >-
-      Please download the Agent tarball {{ imperva_install_tarball }} and place it in the "imperva_packages" directory 
+      Please download the Agent tarball {{ imperva_install_tarball }} and place it in the "imperva_packages" directory
   when: not imperva_tarball_avail.stat.exists
