@@ -26,12 +26,12 @@
       dest: "{{ imperva_tempdir.path }}"
       owner: root
       group: root
-      mode:  0700
+      mode: 0700
   when: agent_installation_manager.stat.isreg is not defined or ragent.stat.isreg is not defined
+
 
 - name: Install Imperva
   block:
-  # Todo: Add better support for multiple versions / instances of the Installation Manager
   - name: Install SecureSphere Agent Installation Manager
     shell: "{{ imperva_tempdir.path }}/Imperva-ragentinstaller* -n -d {{ imperva_installation_dir }}"
     args:
@@ -41,6 +41,37 @@
       - Register Installer
       - Start Install Manager
 
+  - name: test Install SecureSphere DAM Agent
+    shell: "{{ imperva_tempdir.path }}/{{ latest_dam_agent }} -c -n -d {{ imperva_installation_dir }}"
+    when: ragent.stat.isreg is not defined
+    register: test_instll
+    failed_when: "'Test' in test_instll.stderr"
+    ignore_errors: yes
+
+
+  - name: Copy kabi file
+    copy:
+      src: files/imperva_packages/kabi.txt
+      dest: "{{imperva_tempdir.path}}/"
+      owner: root
+      group: root
+      mode:  0644
+    when:
+      - agent_installation_manager.stat.isreg is not defined or ragent.stat.isreg is not defined
+      - test_instll.stdout.find('kabi') != -1
+
+  - name: Install SecureSphere DAM Agent
+    shell: "{{ imperva_tempdir.path }}/{{ latest_dam_agent }} -n -d {{ imperva_installation_dir }} -k {{ imperva_tempdir.path }}/kabi.txt"
+    args:
+      creates: '{{ imperva_installation_dir }}/ragent/bin/racli'
+    when:
+      - ragent.stat.isreg is not defined
+      - test_instll.stdout.find('kabi') != -1
+    notify:
+      - Register Agent
+      - Start Agent service
+      - Get Agent status
+
   - name: Install SecureSphere DAM Agent
     shell: "{{ imperva_tempdir.path }}/{{ latest_dam_agent }} -n -d {{ imperva_installation_dir }}"
     args:
@@ -49,10 +80,11 @@
     notify:
       - Register Agent
       - Start Agent service
+      - Get Agent status
+
   always:
   - name: Remove Tempdir and Installer Files
     file:
       path: "{{ imperva_tempdir.path }}"
       state: absent
   when: agent_installation_manager.stat.isreg is not defined or ragent.stat.isreg is not defined
-
