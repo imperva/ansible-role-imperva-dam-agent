@@ -4,7 +4,7 @@
   register: agent_installation_manager
 
 - name: Gather SecureSphere Agent Installation Manager Facts
-  shell: >-
+  command: >-
     set -o pipefail && {{ imperva_installation_dir }}/installer/bin/racli | awk '/:/ { gsub(" ", "", $0); gsub(":", "=", $0); print }'
   args:
     stdin: "q"
@@ -19,7 +19,9 @@
 
 - name: Get SecureSphere Agent Installation Manager Registration Status
   set_fact:
-    agent_installation_manager_registrationstatus: "{{ agent_installation_manager_facts.stdout_lines | select('match', 'RegistrationStatus=') | first | regex_replace('RegistrationStatus=') }}"
+    agent_installation_manager_registrationstatus: >-
+              "{{ agent_installation_manager_facts.stdout_lines |
+              select('match', 'RegistrationStatus=') | first | regex_replace('RegistrationStatus=') }}"
   when: agent_installation_manager_facts.stdout_lines is defined
 
 - name: SecureSphere Agent Present?
@@ -28,7 +30,7 @@
   register: ragent
 
 - name: Gather SecureSphere Agent Facts
-  shell: '{{ imperva_installation_dir }}/ragent/bin/racli'
+  command: '{{ imperva_installation_dir }}/ragent/bin/racli'
   args:
     stdin: "q"
   when: ragent.stat.isreg is defined and ragent.stat.isreg
