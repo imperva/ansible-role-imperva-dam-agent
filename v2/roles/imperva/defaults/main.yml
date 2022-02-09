@@ -2,7 +2,5 @@
 app_imperva_path: "/opt/imperva"
 app_imperva_port: "443"
 app_imperva_fldr: "2048"
-
 install: True
 imperva_installation_dir: /opt/imperva
-
