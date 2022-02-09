@@ -1,0 +1,22 @@
+namespace: "imperva"
+name: "ansible-role-imperva-dam-agent"
+version: 2.0.0
+readme: README.md
+
+authors:
+- Imperva community <opensource-dev@imperva.com>
+
+description: Playbook for installing Imperva's agent on database servers
+
+license:
+  - Imperva Community License
+
+license_file: 'LICENSE.md'
+
+tags:
+  - Imperva
+  - Database
+  - Security
+  - Agent
+
+repository: https://github.com/imperva/ansible-role-imperva-dam-agent
