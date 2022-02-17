@@ -12,7 +12,7 @@ Vagrant.configure("2") do |config|
       ansible.config_file = "v2/ansible.cfg"
       ansible.compatibility_mode = '2.0'
       ansible.extra_vars = { 'gateway_ip' => '1.2.3.4',
-                             'gateway_pass' => 'Webco123' }
+                             'gateway_pass' => 'your_password' }
     end
   end
 
@@ -23,7 +23,7 @@ Vagrant.configure("2") do |config|
       ansible.config_file = "v2/ansible.cfg"
       ansible.compatibility_mode = '2.0'
       ansible.extra_vars = { 'gateway_ip' => '1.2.3.4',
-                             'gateway_pass' => 'Webco123',
+                             'gateway_pass' => 'your_password',
                              'install' => true }
     end
   end
