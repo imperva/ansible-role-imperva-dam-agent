@@ -1,28 +1,30 @@
 ---
 # Todo: This may need a little work
 - name: Imperva Agent - Uninstall
-  shell: "{{ imperva_installation_dir }}/ragent/bin/uninstall"
+  command: "{{ imperva_installation_dir }}/ragent/bin/uninstall"
   args:
-    warn: false # set to prevent warning message because we have to run it like this to check against the system
-  changed_when: false # This allows this register to show as "OK" instead of always showing "CHANGED"
+      warn: false  # set to prevent warning message because we have to run it like this to check against the system
+  changed_when: false  # This allows this register to show as "OK" instead of always showing "CHANGED"
   ignore_errors: True
   register: imperva_agent_uninstall
+  failed_when: "'FAILURE' in imperva_agent_uninstall.stderr"
 
 - name: Installer Agent - Uninstall
-  shell: "{{ imperva_installation_dir }}/installer/bin/uninstall"
+  command: "{{ imperva_installation_dir }}/installer/bin/uninstall"
   args:
-    warn: false # set to prevent warning message because we have to run it like this to check against the system
-  changed_when: false # This allows this register to show as "OK" instead of always showing "CHANGED"
+      warn: false  # set to prevent warning message because we have to run it like this to check against the system
+  changed_when: false  # This allows this register to show as "OK" instead of always showing "CHANGED"
   ignore_errors: True
   register: installer_agent_uninstall
+  failed_when: "'FAILURE' in installer_agent_uninstall.stderr"
 
 - name: Display Output
   vars:
-    msg: |
+      msg: |
         Installer Agent Uninstall: {{ installer_agent_uninstall.stdout }}
         Imperva Agent Stop: {{ imperva_agent_stop.stdout }}
         Imperva Agent Uninstall: {{ imperva_agent_uninstall.stdout }}
   debug:
-    msg: "{{ msg.split('\n') }}"
+      msg: "{{ msg.split('\n') }}"
   tags: debug_info
   check_mode: no
